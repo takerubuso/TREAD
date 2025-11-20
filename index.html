@@ -76,7 +76,8 @@
             pixiApp.stage.addChild(faceContainer);
 
             // 画像の読み込み確認
-            const faceTexture = PIXI.Texture.from('face.jpg');
+            // テスト用にネットの画像を使ってみる
+const faceTexture = PIXI.Texture.from('https://pixijs.io/examples/examples/assets/bunny.png');
             
             // 本番用の顔スプライト
             faceSprite = new PIXI.Sprite(faceTexture);
