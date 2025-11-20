@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聖徳太子なりきりAR（高速化版）</title>
+    <title>聖徳太子なりきりAR（背景白バージョン）</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #000;
+            /* 背景色が白になるので、bodyの背景も合わせておきます */
+            background-color: #FFF;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -22,14 +23,16 @@
         #status {
             position: absolute;
             top: 10px; right: 10px;
-            color: #0f0; font-family: sans-serif; font-size: 14px;
-            background: rgba(0,0,0,0.7); padding: 8px 12px;
+            color: #333; /* 白背景なので文字を黒っぽく */
+            font-family: sans-serif; font-size: 14px;
+            background: rgba(255,255,255,0.8); /* 背景も白っぽく */
+            padding: 8px 12px;
             border-radius: 5px; z-index: 100; pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <div id="status">高速化モードで起動中...</div>
+    <div id="status">準備中...</div>
     <video id="input_video"></video>
     <canvas id="output_canvas"></canvas>
 
@@ -42,7 +45,7 @@
         // =========== 設定エリア ===========
         const IMAGE_PATH = 'face.png'; 
         const FACE_SCALE = 1.0; 
-        const BLUR_STRENGTH = 10; 
+        // BLUR_STRENGTH は不要になったので削除しました
         const MOUTH_SENSITIVITY = 2.5; 
         // =================================
 
@@ -50,30 +53,36 @@
         const statusElement = document.getElementById('status');
         let faceMesh, selfieSegmentation, camera;
         let pixiApp, faceSprite, segmentationMaskSprite;
-        let videoTexture, bgVideoSprite, fgVideoSprite;
+        let videoTexture, bgSolidSprite, fgVideoSprite; // bgSolidSpriteに変更
         
-        // 高速化のためのカウンター
         let frameCounter = 0;
 
         function log(msg) { statusElement.textContent = msg; }
 
         function initPixi() {
+            // Pixiアプリケーションの背景も白に設定
             pixiApp = new PIXI.Application({
                 view: document.getElementById('output_canvas'),
                 width: window.innerWidth, height: window.innerHeight,
-                transparent: true, resizeTo: window, autoDensity: true
+                transparent: false, // 透明をやめる
+                backgroundColor: 0xFFFFFF, // 背景色を白(FFFFFF)に指定
+                resizeTo: window, autoDensity: true
             });
             videoTexture = PIXI.Texture.from(videoElement);
 
-            bgVideoSprite = new PIXI.Sprite(videoTexture);
-            bgVideoSprite.filters = [new PIXI.BlurFilter(BLUR_STRENGTH)];
-            pixiApp.stage.addChild(bgVideoSprite);
+            // --- レイヤー1 (奥): 白色の単色背景 ---
+            // Pixiの組み込み白色テクスチャを使います
+            bgSolidSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+            // ぼかしフィルターの行は削除しました
+            pixiApp.stage.addChild(bgSolidSprite);
 
+            // --- レイヤー2 (中): 顔イラスト ---
             faceSprite = new PIXI.Sprite(PIXI.Texture.from(IMAGE_PATH));
             faceSprite.anchor.set(0.5);
             faceSprite.visible = false; 
             pixiApp.stage.addChild(faceSprite);
 
+            // --- レイヤー3 (手前): くっきり人物 ---
             fgVideoSprite = new PIXI.Sprite(videoTexture);
             pixiApp.stage.addChild(fgVideoSprite);
             
@@ -87,15 +96,15 @@
 
         function resizeAll() {
             const w = pixiApp.screen.width; const h = pixiApp.screen.height;
-            if(bgVideoSprite) { bgVideoSprite.width = w; bgVideoSprite.height = h; }
+            // 背景スプライトも画面サイズいっぱいに広げる
+            if(bgSolidSprite) { bgSolidSprite.width = w; bgSolidSprite.height = h; }
             if(fgVideoSprite) { fgVideoSprite.width = w; fgVideoSprite.height = h; }
             if(segmentationMaskSprite) { segmentationMaskSprite.width = w; segmentationMaskSprite.height = h; }
         }
 
         function onFaceMeshResults(results) {
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                // 状態表示の更新頻度を落とす（画面描画を軽くするため）
-                if (frameCounter % 30 === 0) log("稼働中: 高速モードON");
+                if (frameCounter % 30 === 0) log("稼働中: 背景白モード");
                 
                 faceSprite.visible = true;
                 const landmarks = results.multiFaceLandmarks[0];
@@ -128,7 +137,6 @@
 
         function onSelfieSegmentationResults(results) {
             segmentationMaskSprite.texture = PIXI.Texture.from(results.segmentationMask);
-            // マスク更新時はリサイズしないとサイズが狂うことがあるため
             segmentationMaskSprite.width = pixiApp.screen.width;
             segmentationMaskSprite.height = pixiApp.screen.height;
         }
@@ -136,15 +144,13 @@
         async function start() {
             log("初期化中..."); initPixi();
             
-            // 設定: refineLandmarksをfalseにすると更に高速になりますが、
-            // 口パクの精度が落ちるので一旦trueのままにします。
-            // 重すぎる場合はここを false にしてください。
             faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
             faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
             faceMesh.onResults(onFaceMeshResults);
 
             selfieSegmentation = new SelfieSegmentation({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`});
-            selfieSegmentation.setOptions({ modelSelection: 1 }); // 0にすると粗くなるけど速くなります
+            // 精度重視のためモデルは1のまま（重ければ0へ）
+            selfieSegmentation.setOptions({ modelSelection: 1 }); 
             selfieSegmentation.onResults(onSelfieSegmentationResults);
 
             log("カメラ起動...");
@@ -152,15 +158,12 @@
                 onFrame: async () => {
                     frameCounter++;
                     
-                    // 【高速化のキモ】
-                    // 1. 顔認識は「毎回」やる（滑らかさ優先）
-                    // 2. 体の切り抜きは「10回に1回」だけやる（重さ対策）
-                    
                     const tasks = [];
-                    tasks.push(faceMesh.send({image: videoElement})); // 常に実行
+                    tasks.push(faceMesh.send({image: videoElement})); // 顔は毎回
 
+                    // 体の切り抜きは10回に1回（高速化のため維持）
                     if (frameCounter % 10 === 0) {
-                        tasks.push(selfieSegmentation.send({image: videoElement})); // たまに実行
+                        tasks.push(selfieSegmentation.send({image: videoElement})); 
                     }
 
                     await Promise.all(tasks);
