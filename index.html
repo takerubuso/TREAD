@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聖徳太子なりきりAR（軽量版）</title>
+    <title>聖徳太子なりきりAR（口パク完成版）</title>
     <style>
         body {
             margin: 0;
@@ -19,26 +19,17 @@
             transform: scaleX(-1); 
         }
         video { display: none; }
-        
-        /* 状態表示用のテキスト（右上） */
         #status {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            color: #0f0; /* 緑色 */
-            font-family: monospace;
-            font-size: 16px;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 100;
-            pointer-events: none;
-            white-space: pre-wrap;
+            top: 10px; right: 10px;
+            color: #0f0; font-family: sans-serif; font-size: 14px;
+            background: rgba(0,0,0,0.7); padding: 8px 12px;
+            border-radius: 5px; z-index: 100; pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <div id="status">起動準備中...</div>
+    <div id="status">準備中...</div>
     <video id="input_video"></video>
     <canvas id="output_canvas"></canvas>
 
@@ -48,141 +39,131 @@
     <script src="https://pixijs.download/v7.x/pixi.min.js"></script>
 
     <script>
-        // --- 設定 ---
-        // ★もし画像が jpg ならここを 'face.jpg' に変えてください
+        // =========== 設定エリア ===========
         const IMAGE_PATH = 'face.png'; 
-        const BLUR_STRENGTH = 10; // ぼかしを少し弱めて軽くする
-        // ------------
+        const FACE_SCALE = 1.0; // 顔の基本サイズ
+        const BLUR_STRENGTH = 10; // 背景ぼかし強度
+
+        // ★追加：口の開きやすさ（数値を上げると、少し開けただけで大きく反応します）
+        const MOUTH_SENSITIVITY = 2.5; 
+        // =================================
 
         const videoElement = document.getElementById('input_video');
-        const canvasElement = document.getElementById('output_canvas');
         const statusElement = document.getElementById('status');
-
         let faceMesh, selfieSegmentation, camera;
         let pixiApp, faceSprite, segmentationMaskSprite;
         let videoTexture, bgVideoSprite, fgVideoSprite;
 
-        function log(msg) {
-            statusElement.textContent = msg;
-            console.log(msg);
-        }
+        function log(msg) { statusElement.textContent = msg; }
 
         function initPixi() {
             pixiApp = new PIXI.Application({
-                view: canvasElement,
-                width: window.innerWidth,
-                height: window.innerHeight,
-                transparent: true,
-                resizeTo: window
+                view: document.getElementById('output_canvas'),
+                width: window.innerWidth, height: window.innerHeight,
+                transparent: true, resizeTo: window, autoDensity: true
             });
-
             videoTexture = PIXI.Texture.from(videoElement);
 
-            // 奥：ぼかし背景
+            // レイヤー構築
             bgVideoSprite = new PIXI.Sprite(videoTexture);
-            bgVideoSprite.width = pixiApp.screen.width;
-            bgVideoSprite.height = pixiApp.screen.height;
             bgVideoSprite.filters = [new PIXI.BlurFilter(BLUR_STRENGTH)];
             pixiApp.stage.addChild(bgVideoSprite);
 
-            // 中：顔イラスト
-            const faceContainer = new PIXI.Container();
-            pixiApp.stage.addChild(faceContainer);
-            
             faceSprite = new PIXI.Sprite(PIXI.Texture.from(IMAGE_PATH));
-            faceSprite.anchor.set(0.5);
+            faceSprite.anchor.set(0.5); // 中心を基準に変形させる
             faceSprite.visible = false; 
-            faceContainer.addChild(faceSprite);
+            pixiApp.stage.addChild(faceSprite);
 
-            // 手前：くっきり人物
             fgVideoSprite = new PIXI.Sprite(videoTexture);
-            fgVideoSprite.width = pixiApp.screen.width;
-            fgVideoSprite.height = pixiApp.screen.height;
             pixiApp.stage.addChild(fgVideoSprite);
-
-            // マスク（最初は白＝全部表示）
-            segmentationMaskSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
-            segmentationMaskSprite.width = pixiApp.screen.width;
-            segmentationMaskSprite.height = pixiApp.screen.height;
+            segmentationMaskSprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
             fgVideoSprite.mask = segmentationMaskSprite;
 
-            // リサイズ対応
-            window.addEventListener('resize', () => {
-                const w = pixiApp.screen.width; const h = pixiApp.screen.height;
-                bgVideoSprite.width = w; bgVideoSprite.height = h;
-                fgVideoSprite.width = w; fgVideoSprite.height = h;
-                segmentationMaskSprite.width = w; segmentationMaskSprite.height = h;
-            });
+            window.addEventListener('resize', resizeAll);
+            resizeAll();
         }
 
+        function resizeAll() {
+            const w = pixiApp.screen.width; const h = pixiApp.screen.height;
+            if(bgVideoSprite) { bgVideoSprite.width = w; bgVideoSprite.height = h; }
+            if(fgVideoSprite) { fgVideoSprite.width = w; fgVideoSprite.height = h; }
+            if(segmentationMaskSprite) { segmentationMaskSprite.width = w; segmentationMaskSprite.height = h; }
+        }
+
+        // 顔認識結果の処理（ここに口パクのロジックを追加）
         function onFaceMeshResults(results) {
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 log("稼働中: 顔認識OK");
                 faceSprite.visible = true;
                 const landmarks = results.multiFaceLandmarks[0];
                 
+                // 位置計算
                 const nose = landmarks[1];
+                faceSprite.position.set(nose.x * pixiApp.screen.width, nose.y * pixiApp.screen.height);
+
+                // 基本サイズの計算
                 const leftCheek = landmarks[234];
                 const rightCheek = landmarks[454];
-
-                const cx = nose.x * pixiApp.screen.width;
-                const cy = nose.y * pixiApp.screen.height;
-                faceSprite.position.set(cx, cy);
-
-                const faceWidth = Math.hypot(
+                const faceWidthPx = Math.hypot(
                     (rightCheek.x - leftCheek.x) * pixiApp.screen.width,
                     (rightCheek.y - leftCheek.y) * pixiApp.screen.height
                 );
-                faceSprite.scale.set((faceWidth / 400) * 2.0);
+                const baseScale = (faceWidthPx / 512) * FACE_SCALE;
 
-                const leftEye = landmarks[33];
-                const rightEye = landmarks[263];
+                // --- ★口の動き計算 ---
+                const upperLip = landmarks[13]; // 上唇中央
+                const lowerLip = landmarks[14]; // 下唇中央
+                // 画面上での唇の距離を測る
+                const mouthDist = Math.hypot(
+                    (upperLip.x - lowerLip.x) * pixiApp.screen.width,
+                    (upperLip.y - lowerLip.y) * pixiApp.screen.height
+                );
+                // 顔の大きさに対する口の開きの比率を計算
+                let mouthRatio = mouthDist / faceWidthPx;
+                // ノイズ除去（口を閉じていても少し距離があるので、それを引く）
+                mouthRatio = Math.max(0, mouthRatio - 0.02);
+
+                // 縦方向のスケールにのみ、口の開き分を加算する
+                const scaleY = baseScale * (1 + mouthRatio * MOUTH_SENSITIVITY);
+                
+                // スケール適用（横は基本通り、縦は口に合わせて伸縮）
+                faceSprite.scale.set(baseScale, scaleY);
+                // ----------------------
+
+                // 傾き計算
+                const leftEye = landmarks[33]; const rightEye = landmarks[263];
                 faceSprite.rotation = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
             } else {
-                log("稼働中: 顔を探しています...");
+                faceSprite.visible = false;
             }
         }
 
         function onSelfieSegmentationResults(results) {
-            // マスク更新
             segmentationMaskSprite.texture = PIXI.Texture.from(results.segmentationMask);
+            resizeAll(); // マスクサイズがリセットされるのを防ぐ
         }
 
         async function start() {
-            log("初期化中: 画面を作成...");
-            initPixi();
-
-            log("初期化中: 顔認識モデルをダウンロード中...(重いです)");
+            log("初期化中..."); initPixi();
             faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-            faceMesh.setOptions({
-                maxNumFaces: 1,
-                refineLandmarks: true,
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5
-            });
+            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
             faceMesh.onResults(onFaceMeshResults);
-
-            log("初期化中: 切り抜きモデルをダウンロード中...");
             selfieSegmentation = new SelfieSegmentation({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`});
             selfieSegmentation.setOptions({ modelSelection: 1 });
             selfieSegmentation.onResults(onSelfieSegmentationResults);
 
-            log("初期化中: カメラを起動します...");
+            log("カメラ起動...");
             camera = new Camera(videoElement, {
                 onFrame: async () => {
-                    // 順番に処理（負荷軽減）
-                    await faceMesh.send({image: videoElement});
-                    await selfieSegmentation.send({image: videoElement});
+                    // 負荷分散のため交互に処理
+                    if (pixiApp.ticker.lastTime % 2 === 0) await faceMesh.send({image: videoElement});
+                    else await selfieSegmentation.send({image: videoElement});
                     videoTexture.update();
-                },
-                width: 640,  // 処理を軽くするために解像度を少し落とす
-                height: 480
+                }, width: 640, height: 480
             });
-            
             await camera.start();
-            log("準備完了: 処理開始");
+            log("AIモデル読み込み中...");
         }
-
         start();
     </script>
 </body>
