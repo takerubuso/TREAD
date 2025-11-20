@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聖徳太子なりきりAR（背景白・安定版）</title>
+    <title>聖徳太子なりきりAR（安全起動版）</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #FFF;
+            /* 起動確認のため、あえて黒にします。正常なら中央に白いキャンバスが出ます */
+            background-color: #000; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -25,15 +26,14 @@
             color: #333;
             font-family: sans-serif; font-size: 14px;
             background: rgba(255,255,255,0.9);
-            border: 1px solid #ccc;
             padding: 8px 12px;
             border-radius: 5px; z-index: 100; pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <div id="status">準備中...</div>
-    <video id="input_video"></video>
+    <div id="status">システム起動中...</div>
+    <video id="input_video" autoplay playsinline></video>
     <canvas id="output_canvas"></canvas>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
@@ -55,39 +55,40 @@
         let videoTexture, bgSolidSprite, fgVideoSprite;
         
         let frameCounter = 0;
-        let isSegmentationReady = false; // 切り抜き準備完了フラグ
+        let isSegmentationReady = false;
 
-        function log(msg) { statusElement.textContent = msg; }
+        function log(msg) { statusElement.textContent = msg; console.log(msg); }
 
         function initPixi() {
             pixiApp = new PIXI.Application({
                 view: document.getElementById('output_canvas'),
                 width: window.innerWidth, height: window.innerHeight,
                 transparent: false, 
-                backgroundColor: 0xFFFFFF, // 背景色：白
+                backgroundColor: 0xFFFFFF, // キャンバスの中身は白
                 resizeTo: window, autoDensity: true
             });
             videoTexture = PIXI.Texture.from(videoElement);
 
-            // --- 背景：真っ白 ---
+            // レイヤー1：白背景
             bgSolidSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
-            bgSolidSprite.tint = 0xFFFFFF; // 色を白に固定
+            bgSolidSprite.tint = 0xFFFFFF;
             pixiApp.stage.addChild(bgSolidSprite);
 
-            // --- イラスト ---
+            // レイヤー2：顔イラスト
             faceSprite = new PIXI.Sprite(PIXI.Texture.from(IMAGE_PATH));
             faceSprite.anchor.set(0.5);
             faceSprite.visible = false; 
             pixiApp.stage.addChild(faceSprite);
 
-            // --- 人物映像 ---
+            // レイヤー3：人物映像
             fgVideoSprite = new PIXI.Sprite(videoTexture);
             pixiApp.stage.addChild(fgVideoSprite);
             
-            // マスク用スプライト
-            // ★最初は「WHITE（全表示）」にしておき、準備ができたら切り抜き画像に差し替える
+            // マスク用スプライト（作成するが、まだ適用しない！）
             segmentationMaskSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
-            fgVideoSprite.mask = segmentationMaskSprite;
+
+            // ★重要：最初はマスクを「null（なし）」にして、映像をそのまま出す
+            fgVideoSprite.mask = null; 
 
             window.addEventListener('resize', resizeAll);
             resizeAll();
@@ -102,9 +103,8 @@
 
         function onFaceMeshResults(results) {
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                if (frameCounter % 60 === 0) log("稼働中: 背景白モード");
+                if (frameCounter % 60 === 0) log("稼働中");
                 faceSprite.visible = true;
-                
                 const landmarks = results.multiFaceLandmarks[0];
                 const nose = landmarks[1];
                 faceSprite.position.set(nose.x * pixiApp.screen.width, nose.y * pixiApp.screen.height);
@@ -133,47 +133,53 @@
         }
 
         function onSelfieSegmentationResults(results) {
-            // 初回の切り抜き成功時にフラグを立てる
-            if (!isSegmentationReady) {
-                isSegmentationReady = true;
-            }
+            // AIが結果を返してきたら、マスク画像を更新
             segmentationMaskSprite.texture = PIXI.Texture.from(results.segmentationMask);
             segmentationMaskSprite.width = pixiApp.screen.width;
             segmentationMaskSprite.height = pixiApp.screen.height;
+
+            // ★ここで初めてマスクを適用する（映像がパッと切り替わります）
+            if (!isSegmentationReady) {
+                isSegmentationReady = true;
+                fgVideoSprite.mask = segmentationMaskSprite;
+                log("切り抜き開始！");
+            }
         }
 
         async function start() {
-            log("初期化中..."); initPixi();
-            
-            faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-            faceMesh.onResults(onFaceMeshResults);
+            log("初期化中..."); 
+            try {
+                initPixi();
+                
+                faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+                faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+                faceMesh.onResults(onFaceMeshResults);
 
-            selfieSegmentation = new SelfieSegmentation({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`});
-            selfieSegmentation.setOptions({ modelSelection: 1 }); 
-            selfieSegmentation.onResults(onSelfieSegmentationResults);
+                selfieSegmentation = new SelfieSegmentation({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`});
+                selfieSegmentation.setOptions({ modelSelection: 1 }); 
+                selfieSegmentation.onResults(onSelfieSegmentationResults);
 
-            log("カメラ起動...");
-            camera = new Camera(videoElement, {
-                onFrame: async () => {
-                    frameCounter++;
-                    
-                    const tasks = [];
-                    tasks.push(faceMesh.send({image: videoElement}));
-
-                    // 切り抜き処理の頻度調整
-                    // 準備完了前は「毎回」やる（早く表示させるため）
-                    // 準備完了後は「3回に1回」やる（重さ対策）
-                    if (!isSegmentationReady || frameCounter % 3 === 0) {
-                        tasks.push(selfieSegmentation.send({image: videoElement})); 
-                    }
-
-                    await Promise.all(tasks);
-                    videoTexture.update();
-                },
-                width: 640, height: 480
-            });
-            await camera.start();
+                log("カメラを要求します...");
+                camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        frameCounter++;
+                        const tasks = [];
+                        tasks.push(faceMesh.send({image: videoElement}));
+                        // 最初は毎回切り抜きを行い、安定したら間引く
+                        if (!isSegmentationReady || frameCounter % 3 === 0) {
+                            tasks.push(selfieSegmentation.send({image: videoElement})); 
+                        }
+                        await Promise.all(tasks);
+                        videoTexture.update();
+                    },
+                    width: 640, height: 480
+                });
+                await camera.start();
+                log("カメラ起動成功。AIモデル読み込み中...");
+            } catch (e) {
+                log("エラー発生: " + e);
+                alert("起動エラー: " + e);
+            }
         }
         start();
     </script>
