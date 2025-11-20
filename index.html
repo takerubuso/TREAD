@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聖徳太子なりきりAR（口パク完成版）</title>
+    <title>聖徳太子なりきりAR（高速化版）</title>
     <style>
         body {
             margin: 0;
@@ -29,7 +29,7 @@
     </style>
 </head>
 <body>
-    <div id="status">準備中...</div>
+    <div id="status">高速化モードで起動中...</div>
     <video id="input_video"></video>
     <canvas id="output_canvas"></canvas>
 
@@ -41,10 +41,8 @@
     <script>
         // =========== 設定エリア ===========
         const IMAGE_PATH = 'face.png'; 
-        const FACE_SCALE = 1.0; // 顔の基本サイズ
-        const BLUR_STRENGTH = 10; // 背景ぼかし強度
-
-        // ★追加：口の開きやすさ（数値を上げると、少し開けただけで大きく反応します）
+        const FACE_SCALE = 1.0; 
+        const BLUR_STRENGTH = 10; 
         const MOUTH_SENSITIVITY = 2.5; 
         // =================================
 
@@ -53,6 +51,9 @@
         let faceMesh, selfieSegmentation, camera;
         let pixiApp, faceSprite, segmentationMaskSprite;
         let videoTexture, bgVideoSprite, fgVideoSprite;
+        
+        // 高速化のためのカウンター
+        let frameCounter = 0;
 
         function log(msg) { statusElement.textContent = msg; }
 
@@ -64,18 +65,19 @@
             });
             videoTexture = PIXI.Texture.from(videoElement);
 
-            // レイヤー構築
             bgVideoSprite = new PIXI.Sprite(videoTexture);
             bgVideoSprite.filters = [new PIXI.BlurFilter(BLUR_STRENGTH)];
             pixiApp.stage.addChild(bgVideoSprite);
 
             faceSprite = new PIXI.Sprite(PIXI.Texture.from(IMAGE_PATH));
-            faceSprite.anchor.set(0.5); // 中心を基準に変形させる
+            faceSprite.anchor.set(0.5);
             faceSprite.visible = false; 
             pixiApp.stage.addChild(faceSprite);
 
             fgVideoSprite = new PIXI.Sprite(videoTexture);
             pixiApp.stage.addChild(fgVideoSprite);
+            
+            // マスクの初期化
             segmentationMaskSprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
             fgVideoSprite.mask = segmentationMaskSprite;
 
@@ -90,47 +92,33 @@
             if(segmentationMaskSprite) { segmentationMaskSprite.width = w; segmentationMaskSprite.height = h; }
         }
 
-        // 顔認識結果の処理（ここに口パクのロジックを追加）
         function onFaceMeshResults(results) {
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                log("稼働中: 顔認識OK");
+                // 状態表示の更新頻度を落とす（画面描画を軽くするため）
+                if (frameCounter % 30 === 0) log("稼働中: 高速モードON");
+                
                 faceSprite.visible = true;
                 const landmarks = results.multiFaceLandmarks[0];
-                
-                // 位置計算
                 const nose = landmarks[1];
                 faceSprite.position.set(nose.x * pixiApp.screen.width, nose.y * pixiApp.screen.height);
 
-                // 基本サイズの計算
-                const leftCheek = landmarks[234];
-                const rightCheek = landmarks[454];
+                const leftCheek = landmarks[234]; const rightCheek = landmarks[454];
                 const faceWidthPx = Math.hypot(
                     (rightCheek.x - leftCheek.x) * pixiApp.screen.width,
                     (rightCheek.y - leftCheek.y) * pixiApp.screen.height
                 );
                 const baseScale = (faceWidthPx / 512) * FACE_SCALE;
 
-                // --- ★口の動き計算 ---
-                const upperLip = landmarks[13]; // 上唇中央
-                const lowerLip = landmarks[14]; // 下唇中央
-                // 画面上での唇の距離を測る
+                // 口パク処理
+                const upperLip = landmarks[13]; const lowerLip = landmarks[14];
                 const mouthDist = Math.hypot(
                     (upperLip.x - lowerLip.x) * pixiApp.screen.width,
                     (upperLip.y - lowerLip.y) * pixiApp.screen.height
                 );
-                // 顔の大きさに対する口の開きの比率を計算
-                let mouthRatio = mouthDist / faceWidthPx;
-                // ノイズ除去（口を閉じていても少し距離があるので、それを引く）
-                mouthRatio = Math.max(0, mouthRatio - 0.02);
-
-                // 縦方向のスケールにのみ、口の開き分を加算する
+                let mouthRatio = Math.max(0, (mouthDist / faceWidthPx) - 0.02);
                 const scaleY = baseScale * (1 + mouthRatio * MOUTH_SENSITIVITY);
-                
-                // スケール適用（横は基本通り、縦は口に合わせて伸縮）
                 faceSprite.scale.set(baseScale, scaleY);
-                // ----------------------
 
-                // 傾き計算
                 const leftEye = landmarks[33]; const rightEye = landmarks[263];
                 faceSprite.rotation = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
             } else {
@@ -140,29 +128,47 @@
 
         function onSelfieSegmentationResults(results) {
             segmentationMaskSprite.texture = PIXI.Texture.from(results.segmentationMask);
-            resizeAll(); // マスクサイズがリセットされるのを防ぐ
+            // マスク更新時はリサイズしないとサイズが狂うことがあるため
+            segmentationMaskSprite.width = pixiApp.screen.width;
+            segmentationMaskSprite.height = pixiApp.screen.height;
         }
 
         async function start() {
             log("初期化中..."); initPixi();
+            
+            // 設定: refineLandmarksをfalseにすると更に高速になりますが、
+            // 口パクの精度が落ちるので一旦trueのままにします。
+            // 重すぎる場合はここを false にしてください。
             faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
             faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
             faceMesh.onResults(onFaceMeshResults);
+
             selfieSegmentation = new SelfieSegmentation({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`});
-            selfieSegmentation.setOptions({ modelSelection: 1 });
+            selfieSegmentation.setOptions({ modelSelection: 1 }); // 0にすると粗くなるけど速くなります
             selfieSegmentation.onResults(onSelfieSegmentationResults);
 
             log("カメラ起動...");
             camera = new Camera(videoElement, {
                 onFrame: async () => {
-                    // 負荷分散のため交互に処理
-                    if (pixiApp.ticker.lastTime % 2 === 0) await faceMesh.send({image: videoElement});
-                    else await selfieSegmentation.send({image: videoElement});
+                    frameCounter++;
+                    
+                    // 【高速化のキモ】
+                    // 1. 顔認識は「毎回」やる（滑らかさ優先）
+                    // 2. 体の切り抜きは「10回に1回」だけやる（重さ対策）
+                    
+                    const tasks = [];
+                    tasks.push(faceMesh.send({image: videoElement})); // 常に実行
+
+                    if (frameCounter % 10 === 0) {
+                        tasks.push(selfieSegmentation.send({image: videoElement})); // たまに実行
+                    }
+
+                    await Promise.all(tasks);
                     videoTexture.update();
-                }, width: 640, height: 480
+                },
+                width: 640, height: 480
             });
             await camera.start();
-            log("AIモデル読み込み中...");
         }
         start();
     </script>
