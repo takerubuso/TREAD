@@ -3,612 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TREAD - Premium Men's Grooming</title>
+    <title>聖徳太子なりきりAR</title>
     <style>
-        /* Global Styles */
-        :root {
-            --primary: #1a1a1a;
-            --secondary: #a58e44;
-            --light: #f5f5f5;
-            --dark: #121212;
-            --text: #333333;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-        }
-        
         body {
-            color: var(--text);
-            background-color: var(--light);
-            line-height: 1.6;
-        }
-        
-        h1, h2, h3, h4 {
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        p {
-            margin-bottom: 1rem;
-        }
-        
-        a {
-            color: var(--secondary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        a:hover {
-            color: var(--primary);
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-        
-        .btn {
-            display: inline-block;
-            background-color: var(--primary);
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            font-weight: 500;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            font-size: 14px;
-        }
-        
-        .btn:hover {
-            background-color: var(--secondary);
-            color: white;
-        }
-        
-        section {
-            padding: 5rem 0;
-        }
-        
-        .section-title {
-            text-align: center;
-            margin-bottom: 3rem;
-            font-size: 2.5rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .section-subtitle {
-            text-align: center;
-            color: var(--secondary);
-            font-size: 1.2rem;
-            margin-bottom: 3rem;
-            font-weight: 400;
-        }
-        
-        /* Header */
-        header {
-            background-color: var(--primary);
-            padding: 1rem 0;
-            position: fixed;
-            width: 100%;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            color: white;
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-        }
-        
-        .logo span {
-            color: var(--secondary);
-        }
-        
-        nav ul {
-            display: flex;
-            list-style: none;
-        }
-        
-        nav ul li {
-            margin-left: 2rem;
-        }
-        
-        nav ul li a {
-            color: white;
-            font-weight: 500;
-            text-transform: uppercase;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-        
-        nav ul li a:hover {
-            color: var(--secondary);
-        }
-        
-        /* Hero Section */
-        .hero {
-            background-color: var(--dark);
-            color: white;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            position: relative;
+            margin: 0;
             overflow: hidden;
-        }
-        
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-        }
-        
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            max-width: 600px;
-        }
-        
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-        }
-        
-        /* About Section */
-        .about {
-            background-color: white;
-        }
-        
-        .about-content {
-            display: flex;
-            align-items: center;
-            gap: 4rem;
-        }
-        
-        .about-text {
-            flex: 1;
-        }
-        
-        .about-image {
-            flex: 1;
-        }
-        
-        .about-image img {
-            width: 100%;
-            border-radius: 5px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        /* Products Section */
-        .products {
-            background-color: var(--light);
-        }
-        
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .product-card {
-            background-color: white;
-            border-radius: 5px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        .product-image {
-            height: 300px;
-            overflow: hidden;
-        }
-        
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: all 0.3s ease;
-        }
-        
-        .product-card:hover .product-image img {
-            transform: scale(1.05);
-        }
-        
-        .product-info {
-            padding: 1.5rem;
-        }
-        
-        .product-title {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .product-price {
-            color: var(--secondary);
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        /* Philosophy Section */
-        .philosophy {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .philosophy-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-        }
-        
-        .philosophy-item {
-            padding: 2rem;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 5px;
-        }
-        
-        .philosophy-item h3 {
-            color: var(--secondary);
-            margin-bottom: 1rem;
-        }
-        
-        /* Team Section */
-        .team {
-            background-color: white;
-        }
-        
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 2rem;
-        }
-        
-        .team-member {
-            text-align: center;
-        }
-        
-        .team-avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin: 0 auto 1rem;
-            border: 5px solid var(--light);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .team-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .team-name {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .team-role {
-            color: var(--secondary);
-            font-style: italic;
-            margin-bottom: 1rem;
-        }
-        
-        .social-links a {
-            margin: 0 5px;
-            color: var(--primary);
-            font-size: 1.2rem;
-        }
-        
-        /* Contact Section */
-        .contact {
-            background-color: var(--light);
-        }
-        
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 4rem;
-        }
-        
-        .contact-info {
-            margin-bottom: 2rem;
-        }
-        
-        .contact-item {
-            display: flex;
-            margin-bottom: 1rem;
-            align-items: flex-start;
-        }
-        
-        .contact-icon {
-            margin-right: 1rem;
-            color: var(--secondary);
-            font-size: 1.2rem;
-        }
-        
-        .contact-form input,
-        .contact-form textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-        
-        .contact-form textarea {
-            height: 150px;
-            resize: vertical;
-        }
-        
-        /* Footer */
-        footer {
-            background-color: var(--dark);
-            color: white;
-            padding: 3rem 0;
-            text-align: center;
-        }
-        
-        .footer-links {
+            background-color: #000;
             display: flex;
             justify-content: center;
-            margin: 2rem 0;
+            align-items: center;
+            height: 100vh;
         }
-        
-        .footer-links a {
-            margin: 0 1rem;
+        /* 描画を行うキャンバス */
+        canvas {
+            position: absolute;
+            transform: scaleX(-1); /* 鏡のように左右反転させる */
+        }
+        /* カメラ映像を表示するビデオ要素（非表示にするが解析に必要） */
+        video {
+            display: none;
+        }
+        #loading {
             color: white;
-        }
-        
-        .footer-social {
-            margin-bottom: 2rem;
-        }
-        
-        .footer-social a {
-            display: inline-block;
-            margin: 0 10px;
-            color: white;
-            font-size: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .footer-social a:hover {
-            color: var(--secondary);
-            transform: translateY(-3px);
-        }
-        
-        .copyright {
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.6);
-        }
-        
-        /* Media Queries */
-        @media screen and (max-width: 768px) {
-            .about-content {
-                flex-direction: column;
-            }
-            
-            .philosophy-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .contact-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .hero h1 {
-                font-size: 2.5rem;
-            }
+            font-size: 24px;
+            position: absolute;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="container header-container">
-            <a href="#" class="logo">TREAD<span>.</span></a>
-            <nav>
-                <ul>
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#products">Products</a></li>
-                    <li><a href="#philosophy">Philosophy</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+    <div id="loading">準備中...カメラを許可してください</div>
+    <video id="input_video"></video>
+    <canvas id="output_canvas"></canvas>
 
-    <!-- Hero Section -->
-    <section id="home" class="hero" style="background-image: url('images/1.png');">
-        <div class="container">
-            <div class="hero-content">
-                <h1>Timeless Grooming for Modern Gentlemen</h1>
-                <p>Premium pomades and styling products inspired by classic barber culture, crafted for today's sophisticated men.</p>
-                <a href="#products" class="btn">Explore Products</a>
-            </div>
-        </div>
-    </section>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://pixijs.download/v7.x/pixi.min.js"></script>
 
-    <!-- About Section -->
-    <section id="about" class="about">
-        <div class="container">
-            <h2 class="section-title">Our Story</h2>
-            <p class="section-subtitle">Blending tradition with innovation</p>
-            <div class="about-content">
-                <div class="about-text">
-                    <h3>伝統と革新を融合させた、新時代のグルーミング</h3>
-                    <p>TREAD（トレッド）は、クラシックバーバー文化の伝統と現代のライフスタイルを融合させた、プレミアムな整髪料ブランドです。私たちは2021年の創業以来、30〜50代のダンディな大人の男性に向けて、最高品質の製品と洗練された品格を提供してきました。</p>
-                    <p>創業者とブランド監修者たちは、伝統的な理容文化への深い敬意と現代のトレンドへの鋭い洞察を持ち、それらを見事に調和させた製品を生み出しています。</p>
-                    <p>TREADの製品は単なる整髪料ではなく、クラシックな男性美と現代のライフスタイルを繋ぐ架け橋です。伝統の技術と革新の機能性が融合した私たちの製品で、あなただけの洗練されたスタイルを見つけてください。</p>
-                    <a href="#philosophy" class="btn">Learn More</a>
-                </div>
-                <div class="about-image">
-                    <img src="images/5.png" alt="TREAD products">
-                </div>
-            </div>
-        </div>
-    </section>
+    <script>
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
+        const loadingElement = document.getElementById('loading');
 
-    <!-- Products Section -->
-    <section id="products" class="products">
-        <div class="container">
-            <h2 class="section-title">Our Products</h2>
-            <p class="section-subtitle">Crafted with precision for the modern gentleman</p>
-            <div class="product-grid">
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="images/9.png" alt="Matte Wax">
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-title">TREAD Matte Wax</h3>
-                        <p class="product-price">¥3,800</p>
-                        <p>マットな質感と自然な仕上がりを実現する、しっかりとしたホールド力のあるワックス。天然由来成分配合で髪と頭皮に優しい処方。</p>
-                        <a href="#" class="btn">View Product</a>
-                    </div>
-                </div>
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="images/9.png" alt="Shine Pomade">
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-title">TREAD Shine Pomade</h3>
-                        <p class="product-price">¥3,500</p>
-                        <p>クラシックなウェットルックを実現する、光沢のあるポマード。長時間キープと簡単な洗い流しを両立した、現代の男性のための製品。</p>
-                        <a href="#" class="btn">View Product</a>
-                    </div>
-                </div>
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="images/9.png" alt="Clay Pomade">
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-title">TREAD Clay Pomade</h3>
-                        <p class="product-price">¥4,200</p>
-                        <p>ナチュラルな質感とマットな仕上がりを持ちながら、強力なホールド力を兼ね備えたクレイポマード。理想的なスタイリングを実現します。</p>
-                        <a href="#" class="btn">View Product</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        let faceMesh, selfieSegmentation, camera;
+        let pixiApp, faceSprite, segmentationMask, videoSprite;
+        let isLoaded = false;
 
-    <!-- Philosophy Section -->
-    <section id="philosophy" class="philosophy">
-        <div class="container">
-            <h2 class="section-title">Our Philosophy</h2>
-            <p class="section-subtitle">The core values that guide us</p>
-            <div class="philosophy-grid">
-                <div class="philosophy-item">
-                    <h3>クラシックバーバー文化</h3>
-                    <p>私たちは伝統的なバーバースタイルを重んじ、その文化を現代に継承します。クラシカルな理容技術と美学を大切にし、その精神を製品に込めています。</p>
-                </div>
-                <div class="philosophy-item">
-                    <h3>現代のライフスタイル</h3>
-                    <p>現代の男性のライフスタイルに寄り添う整髪料を提供します。忙しい日常の中でも簡単に使え、一日中スタイルをキープできる機能性を追求しています。</p>
-                </div>
-                <div class="philosophy-item">
-                    <h3>融合と革新</h3>
-                    <p>伝統的なスタイリングと最先端のグルーミング技術を融合させます。古き良き時代の美学と現代のテクノロジーを組み合わせ、唯一無二の製品を生み出しています。</p>
-                </div>
-                <div class="philosophy-item">
-                    <h3>品格の提供</h3>
-                    <p>洗練された大人の男性に相応しい品格を提供します。外見だけでなく、内面から滲み出る男性らしさや品格を大切にする方々のために作られています。</p>
-                </div>
-            </div>
-        </div>
-    </section>
+        // Pixi.jsの初期化
+        function initPixi() {
+            pixiApp = new PIXI.Application({
+                view: canvasElement,
+                width: window.innerWidth,
+                height: window.innerHeight,
+                transparent: true,
+                autoDensity: true,
+                resolution: window.devicePixelRatio || 1
+            });
 
-    <!-- Contact Section -->
-    <section id="contact" class="contact">
-        <div class="container">
-            <h2 class="section-title">Contact Us</h2>
-            <p class="section-subtitle">Get in touch with our team</p>
-            <div class="contact-grid">
-                <div>
-                    <div class="contact-info">
-                        <div class="contact-item">
-                            <div class="contact-icon">📍</div>
-                            <div>
-                                <h4>Address</h4>
-                                <p>〒810-0001 福岡県福岡市中央区天神2丁目2番12号T&Jビルディング7F</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <div class="contact-icon">📱</div>
-                            <div>
-                                <h4>Social Media</h4>
-                                <p>Instagram: @tread_since2021</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <div class="contact-icon">📧</div>
-                            <div>
-                                <h4>Email</h4>
-                                <p>info@tread.jp</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <form class="contact-form">
-                        <input type="text" placeholder="Your Name" required>
-                        <input type="email" placeholder="Your Email" required>
-                        <input type="text" placeholder="Subject">
-                        <textarea placeholder="Your Message" required></textarea>
-                        <button type="submit" class="btn">Send Message</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
+            // カメラ映像を背景として表示するスプライト
+            const videoTexture = PIXI.Texture.from(videoElement);
+            videoSprite = new PIXI.Sprite(videoTexture);
+            videoSprite.width = pixiApp.screen.width;
+            videoSprite.height = pixiApp.screen.height;
+            pixiApp.stage.addChild(videoSprite);
+            
+            // オクルージョン（前後関係）のための設定
+            // イラストを表示するコンテナ
+            const faceContainer = new PIXI.Container();
+            pixiApp.stage.addChild(faceContainer);
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <a href="#" class="logo">TREAD<span>.</span></a>
-            <div class="footer-links">
-                <a href="#home">Home</a>
-                <a href="#about">About</a>
-                <a href="#products">Products</a>
-                <a href="#philosophy">Philosophy</a>
-                <a href="#contact">Contact</a>
-            </div>
-            <div class="footer-social">
-                <a href="https://instagram.com/tread_since2021" target="_blank">Instagram</a>
-            </div>
-            <p class="copyright">© 2025 TREAD LLC. All rights reserved.</p>
-        </div>
-    </footer>
+            // 顔画像の読み込みとスプライト作成
+            const faceTexture = PIXI.Texture.from('face.png'); // 保存した画像ファイル名
+            faceSprite = new PIXI.Sprite(faceTexture);
+            faceSprite.anchor.set(0.5); // 中心を基準点にする
+            faceSprite.visible = false; // 最初は非表示
+            faceContainer.addChild(faceSprite);
+
+            // マスク用のスプライト（Selfie Segmentationの結果を描画）
+            segmentationMask = new PIXI.Sprite(PIXI.Texture.WHITE);
+            segmentationMask.width = pixiApp.screen.width;
+            segmentationMask.height = pixiApp.screen.height;
+            // このマスクを適用することで、人物領域以外を隠す（＝人物の後ろにイラストが行く）
+            faceContainer.mask = segmentationMask;
+
+            window.addEventListener('resize', () => {
+                pixiApp.renderer.resize(window.innerWidth, window.innerHeight);
+                videoSprite.width = pixiApp.screen.width;
+                videoSprite.height = pixiApp.screen.height;
+                segmentationMask.width = pixiApp.screen.width;
+                segmentationMask.height = pixiApp.screen.height;
+            });
+        }
+
+        // MediaPipe Face Meshの結果を受け取る関数
+        function onFaceMeshResults(results) {
+            if (!isLoaded) {
+                loadingElement.style.display = 'none';
+                isLoaded = true;
+            }
+
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                const landmarks = results.multiFaceLandmarks[0];
+                faceSprite.visible = true;
+
+                // --- 顔の位置と大きさの計算 ---
+                // 鼻の頭(1)、左右の頬(234, 454)を使って中心と幅を計算
+                const nose = landmarks[1];
+                const leftCheek = landmarks[234];
+                const rightCheek = landmarks[454];
+
+                const cx = nose.x * pixiApp.screen.width;
+                const cy = nose.y * pixiApp.screen.height;
+                faceSprite.position.set(cx, cy);
+
+                // 顔の幅からスケールを計算（調整が必要な場合があります）
+                const faceWidth = Math.hypot(
+                    (rightCheek.x - leftCheek.x) * pixiApp.screen.width,
+                    (rightCheek.y - leftCheek.y) * pixiApp.screen.height
+                );
+                const initialFaceWidth = 400; // 元画像の顔のおおよその幅(px)
+                const scale = (faceWidth / initialFaceWidth) * 1.8; // 少し大きめに調整
+                faceSprite.scale.set(scale);
+
+                // --- 顔の回転の計算（簡易版） ---
+                // 目の中心と口の中心を結ぶ線から傾きを計算
+                const leftEye = landmarks[33];
+                const rightEye = landmarks[263];
+                const mouthCenter = landmarks[13]; // 上唇の中央
+
+                const eyeCenterX = (leftEye.x + rightEye.x) / 2;
+                const eyeCenterY = (leftEye.y + rightEye.y) / 2;
+                
+                const dx = mouthCenter.x - eyeCenterX;
+                const dy = mouthCenter.y - eyeCenterY;
+                // 基準となる垂直線からの角度を計算
+                const angle = Math.atan2(dy, dx) - Math.PI / 2;
+                faceSprite.rotation = angle;
+
+
+                // --- 表情（口の開閉）の計算 ---
+                // 上唇(13)と下唇(14)の距離を計算
+                const upperLip = landmarks[13];
+                const lowerLip = landmarks[14];
+                const mouthOpenDistance = Math.hypot(
+                    (upperLip.x - lowerLip.x),
+                    (upperLip.y - lowerLip.y)
+                );
+                
+                // 基準となる口の幅で割って正規化
+                const mouthWidth = Math.hypot(
+                    (landmarks[61].x - landmarks[291].x),
+                    (landmarks[61].y - landmarks[291].y)
+                );
+                const mouthOpenRatio = mouthOpenDistance / mouthWidth;
+
+                // 一定以上口が開いたら、画像を縦に伸ばして開いているように見せる（簡易表現）
+                // より自然にするには、口を開けた別の画像を用意して切り替えるか、メッシュ変形が必要です。
+                if (mouthOpenRatio > 0.1) {
+                    faceSprite.scale.y = scale * (1 + mouthOpenRatio * 0.5);
+                } else {
+                    faceSprite.scale.y = scale;
+                }
+
+            } else {
+                faceSprite.visible = false;
+            }
+        }
+
+        // MediaPipe Selfie Segmentationの結果を受け取る関数
+        function onSelfieSegmentationResults(results) {
+            // セグメンテーションマスク（人物の切り抜き画像）をPixiのテクスチャとして更新
+            const maskTexture = PIXI.Texture.from(results.segmentationMask);
+            segmentationMask.texture = maskTexture;
+        }
+
+        // 初期化とメインループの開始
+        async function start() {
+            initPixi();
+
+            // Face Meshの設定
+            faceMesh = new FaceMesh({locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+            }});
+            faceMesh.setOptions({
+                maxNumFaces: 1,
+                refineLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            faceMesh.onResults(onFaceMeshResults);
+
+            // Selfie Segmentationの設定
+            selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+            }});
+            selfieSegmentation.setOptions({
+                modelSelection: 1, // 0: 一般向け, 1: 風景向け(精度が高い)
+            });
+            selfieSegmentation.onResults(onSelfieSegmentationResults);
+
+            // カメラの設定と開始
+            camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    // カメラの1フレームを両方のモデルで処理する
+                    await faceMesh.send({image: videoElement});
+                    await selfieSegmentation.send({image: videoElement});
+                    // Pixiのビデオテクスチャも更新
+                    videoSprite.texture.update();
+                },
+                width: 1280,
+                height: 720
+            });
+            camera.start();
+        }
+
+        start();
+    </script>
 </body>
 </html>
